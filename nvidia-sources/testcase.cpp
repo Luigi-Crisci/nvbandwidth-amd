@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-
-#include <hip/hip_runtime.h>
 #include "testcase.h"
 
 Testcase::Testcase(std::string key, std::string desc) : 
@@ -28,7 +26,7 @@ std::string Testcase::testDesc() { return desc; }
 
 bool Testcase::filterHasAccessiblePeerPairs() {
     int deviceCount = 0;
-    CU_ASSERT(hipGetDeviceCount(&deviceCount));
+    CU_ASSERT(cuDeviceGetCount(&deviceCount));
 
     for (int currentDevice = 0; currentDevice < deviceCount; currentDevice++) {
         for (int peer = 0; peer < deviceCount; peer++) {
@@ -38,7 +36,7 @@ bool Testcase::filterHasAccessiblePeerPairs() {
                 continue;
             }
 
-            CU_ASSERT(hipDeviceCanAccessPeer(&canAccessPeer, currentDevice, peer));
+            CU_ASSERT(cuDeviceCanAccessPeer(&canAccessPeer, currentDevice, peer));
             if (canAccessPeer) {
                 return true;
             }

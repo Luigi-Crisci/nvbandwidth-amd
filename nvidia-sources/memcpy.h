@@ -27,14 +27,14 @@ protected:
 public:
     MemcpyNode(size_t bufferSize);
     virtual ~MemcpyNode() {}
-    hipDeviceptr_t getBuffer() const;
+    CUdeviceptr getBuffer() const;
     size_t getBufferSize() const;
     
     virtual int getNodeIdx() const = 0;
-    virtual hipCtx_t getPrimaryCtx() const = 0;
+    virtual CUcontext getPrimaryCtx() const = 0;
     virtual std::string getNodeString() const = 0;
-    static void memsetPattern(hipDeviceptr_t buffer, unsigned long long size, unsigned int seed);
-    static void memcmpPattern(hipDeviceptr_t buffer, unsigned long long size, unsigned int seed);
+    static void memsetPattern(CUdeviceptr buffer, unsigned long long size, unsigned int seed);
+    static void memcmpPattern(CUdeviceptr buffer, unsigned long long size, unsigned int seed);
     static void xorshift2MBPattern(unsigned int* buffer, unsigned int seed);
 };
 
@@ -46,7 +46,7 @@ public:
     ~HostNode();
 
     int getNodeIdx() const override;
-    hipCtx_t getPrimaryCtx() const override;
+    CUcontext getPrimaryCtx() const override;
     virtual std::string getNodeString() const override;
 };
 
@@ -54,13 +54,13 @@ public:
 class DeviceNode : public MemcpyNode {
 private:
     int deviceIdx;
-    hipCtx_t primaryCtx{};
+    CUcontext primaryCtx{};
 public:
     DeviceNode(size_t bufferSize, int deviceIdx);
     ~DeviceNode();
 
     int getNodeIdx() const override;
-    hipCtx_t getPrimaryCtx() const override;
+    CUcontext getPrimaryCtx() const override;
     virtual std::string getNodeString() const override;
 
     bool enablePeerAcess(const DeviceNode &peerNode);
@@ -94,7 +94,7 @@ protected:
     // Pure virtual function for implementation of the actual memcpy function
     // return actual bytes copied
     // This can vary from copySize due to SM copies truncated the copy to achieve max bandwidth
-    virtual size_t memcpyFunc(hipDeviceptr_t dst, hipDeviceptr_t src, hipStream_t stream, size_t copySize, unsigned long long loopCount) = 0;
+    virtual size_t memcpyFunc(CUdeviceptr dst, CUdeviceptr src, CUstream stream, size_t copySize, unsigned long long loopCount) = 0;
 public:
     MemcpyOperation(unsigned long long loopCount, ContextPreference ctxPreference = ContextPreference::PREFER_SRC_CONTEXT, BandwidthValue bandwidthValue = BandwidthValue::USE_FIRST_BW);
     virtual ~MemcpyOperation();
@@ -105,23 +105,23 @@ public:
     double doMemcpy(const MemcpyNode &srcNode, const MemcpyNode &dstNode);
 private:
     // Pure virtual function to get final calculated copy sizes
-    virtual size_t getAdjustedCopySize (size_t size, hipStream_t stream) = 0;
+    virtual size_t getAdjustedCopySize (size_t size, CUstream stream) = 0;
 };
 
 class MemcpyOperationSM : public MemcpyOperation {
 private:
-    size_t memcpyFunc(hipDeviceptr_t dst, hipDeviceptr_t src, hipStream_t stream, size_t copySize, unsigned long long loopCount);
+    size_t memcpyFunc(CUdeviceptr dst, CUdeviceptr src, CUstream stream, size_t copySize, unsigned long long loopCount);
     // Calculate the truncated sizes used by copy kernels
-    size_t getAdjustedCopySize(size_t size, hipStream_t stream);
+    size_t getAdjustedCopySize(size_t size, CUstream stream);
 public:
     MemcpyOperationSM(unsigned long long loopCount, ContextPreference ctxPreference = ContextPreference::PREFER_SRC_CONTEXT, BandwidthValue bandwidthValue = BandwidthValue::SUM_BW);
 };
 
 class MemcpyOperationCE : public MemcpyOperation {
 private:
-    size_t memcpyFunc(hipDeviceptr_t dst, hipDeviceptr_t src, hipStream_t stream, size_t copySize, unsigned long long loopCount);
+    size_t memcpyFunc(CUdeviceptr dst, CUdeviceptr src, CUstream stream, size_t copySize, unsigned long long loopCount);
     // CE copies do not adjust size, so a simple return of size
-    size_t getAdjustedCopySize(size_t size, hipStream_t stream);
+    size_t getAdjustedCopySize(size_t size, CUstream stream);
 public:
     MemcpyOperationCE(unsigned long long loopCount, ContextPreference ctxPreference = ContextPreference::PREFER_SRC_CONTEXT, BandwidthValue bandwidthValue = BandwidthValue::USE_FIRST_BW);
 };

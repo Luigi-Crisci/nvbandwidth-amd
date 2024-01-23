@@ -18,7 +18,7 @@
 
 #include <hip/hip_runtime.h>
 #include "memcpy.h"
-#include "kernels.h"
+#include "kernels.cuh"
 #include "hip/hip_vector_types.h"
 
 #define WARMUP_COUNT 4

@@ -21,7 +21,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
-#include <hip/hip_runtime.h>
+#include <cuda.h>
 #include <nvml.h>
 #include <float.h>
 #include <iomanip>
@@ -235,11 +235,11 @@ std::ostream &operator<<(std::ostream &o, const PeerValueMatrix<T> &matrix) {
 }
 
 // CUDA Error handling
-inline void CU_ASSERT(hipError_t cuResult, const char *msg = nullptr) {
-    if (cuResult != hipSuccess) {
+inline void CU_ASSERT(CUresult cuResult, const char *msg = nullptr) {
+    if (cuResult != CUDA_SUCCESS) {
         const char *errDescStr, *errNameStr;
-        hipDrvGetErrorString(cuResult, &errDescStr);
-        hipDrvGetErrorName(cuResult, &errNameStr);
+        cuGetErrorString(cuResult, &errDescStr);
+        cuGetErrorName(cuResult, &errNameStr);
         std::cout << "[" << errNameStr << "] " << errDescStr;
         if (msg != nullptr) std::cout << ":\n\t" << msg;
         std::cout << std::endl;
@@ -268,12 +268,12 @@ inline void setOptimalCpuAffinity(int cudaDeviceID) {
     }
 
     nvmlDevice_t device;
-    hipUUID dev_uuid;
+    CUuuid dev_uuid;
 
     std::stringstream s;
     std::unordered_set <unsigned char> dashPos {0, 4, 6, 8, 10};
 
-    CU_ASSERT(hipDeviceGetUuid(&dev_uuid, cudaDeviceID));
+    CU_ASSERT(cuDeviceGetUuid(&dev_uuid, cudaDeviceID));
 
     s << "GPU";
     for (int i = 0; i < 16; i++) {
@@ -291,9 +291,9 @@ inline void setOptimalCpuAffinity(int cudaDeviceID) {
 }
 
 inline bool isMemoryOwnedByCUDA(void *memory) {
-    hipMemoryType memorytype;
-    hipError_t status = hipPointerGetAttribute(&memorytype, HIP_POINTER_ATTRIBUTE_MEMORY_TYPE, (hipDeviceptr_t)memory);
-    if (status == hipErrorInvalidValue) {
+    CUmemorytype memorytype;
+    CUresult status = cuPointerGetAttribute(&memorytype, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr)memory);
+    if (status == CUDA_ERROR_INVALID_VALUE) {
         return false;
     } else {
         CU_ASSERT(status);

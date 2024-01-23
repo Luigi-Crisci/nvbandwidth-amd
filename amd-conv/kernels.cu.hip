@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+
+#include <hip/hip_runtime.h>
 #include "kernels.cuh"
 
 __global__ void simpleCopyKernel(unsigned long long loopCount, uint4 *dst, uint4 *src) {
@@ -23,7 +25,7 @@ __global__ void simpleCopyKernel(unsigned long long loopCount, uint4 *dst, uint4
         size_t offset = idx * sizeof(uint4);
         uint4* dst_uint4 = reinterpret_cast<uint4*>((char*)dst + offset);
         uint4* src_uint4 = reinterpret_cast<uint4*>((char*)src + offset);
-	__stcg(dst_uint4, __ldcg(src_uint4));
+	// __stcg(dst_uint4, __ldcg(src_uint4));
     }
 }
 __global__ void stridingMemcpyKernel(unsigned int totalThreadCount, unsigned long long loopCount, uint4* dst, uint4* src, size_t chunkSizeInElement) {
@@ -72,15 +74,15 @@ __global__ void stridingMemcpyKernel(unsigned int totalThreadCount, unsigned lon
     }
 }
 
-size_t copyKernel(CUdeviceptr dstBuffer, CUdeviceptr srcBuffer, size_t size, CUstream stream, unsigned long long loopCount) {
-    CUdevice dev;
-    CUcontext ctx;
+size_t copyKernel(hipDeviceptr_t dstBuffer, hipDeviceptr_t srcBuffer, size_t size, hipStream_t stream, unsigned long long loopCount) {
+    hipDevice_t dev;
+    hipCtx_t ctx;
 
     CU_ASSERT(cuStreamGetCtx(stream, &ctx));
-    CU_ASSERT(cuCtxGetDevice(&dev));
+    CU_ASSERT(hipCtxGetDevice(&dev));
 
     int numSm;
-    CU_ASSERT(cuDeviceGetAttribute(&numSm, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, dev));
+    CU_ASSERT(hipDeviceGetAttribute(&numSm, hipDeviceAttributeMultiprocessorCount, dev));
     unsigned int totalThreadCount = numSm * numThreadPerBlock;
 
     // If the user provided buffer size is samller than default buffer size,
@@ -115,7 +117,7 @@ size_t copyKernel(CUdeviceptr dstBuffer, CUdeviceptr srcBuffer, size_t size, CUs
 
 __global__ void spinKernelDevice(volatile int *latch, const unsigned long long timeoutClocks)
 {
-    register unsigned long long endTime = clock64() + timeoutClocks;
+    unsigned long long endTime = clock64() + timeoutClocks;
     while (!*latch) {
         if (timeoutClocks != ~0ULL && clock64() > endTime) {
             break;
@@ -123,31 +125,31 @@ __global__ void spinKernelDevice(volatile int *latch, const unsigned long long t
     }
 }
 
-CUresult spinKernel(volatile int *latch, CUstream stream, unsigned long long timeoutMs)
+hipError_t spinKernel(volatile int *latch, hipStream_t stream, unsigned long long timeoutMs)
 {
     int clocksPerMs = 0;
-    CUcontext ctx;
-    CUdevice dev;
+    hipCtx_t ctx;
+    hipDevice_t dev;
 
     CU_ASSERT(cuStreamGetCtx(stream, &ctx));
-    CU_ASSERT(cuCtxGetDevice(&dev));
+    CU_ASSERT(hipCtxGetDevice(&dev));
 
-    CU_ASSERT(cuDeviceGetAttribute(&clocksPerMs, CU_DEVICE_ATTRIBUTE_CLOCK_RATE, dev));
+    CU_ASSERT(hipDeviceGetAttribute(&clocksPerMs, hipDeviceAttributeClockRate, dev));
 
     unsigned long long timeoutClocks = clocksPerMs * timeoutMs;
 
     spinKernelDevice<<<1, 1, 0, stream>>>(latch, timeoutClocks);
 
-    return CUDA_SUCCESS;
+    return hipSuccess;
 }
 
 void preloadKernels(int deviceCount)
 {
-    cudaFuncAttributes unused;
+    hipFuncAttributes unused;
     for (int iDev = 0; iDev < deviceCount; iDev++) {
-        cudaSetDevice(iDev);
-        cudaFuncGetAttributes(&unused, &stridingMemcpyKernel);
-        cudaFuncGetAttributes(&unused, &spinKernelDevice);
-        cudaFuncGetAttributes(&unused, &simpleCopyKernel);
+        hipSetDevice(iDev);
+        hipFuncGetAttributes(&unused, &stridingMemcpyKernel);
+        hipFuncGetAttributes(&unused, &spinKernelDevice);
+        hipFuncGetAttributes(&unused, &simpleCopyKernel);
     }
 }

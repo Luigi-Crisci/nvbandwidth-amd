@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 
-
-#include <hip/hip_runtime.h>
 #include "testcase.h"
-#include "kernels.h"
+#include "kernels.cuh"
 #include "memcpy.h"
 
 void HostToDeviceSM::run(unsigned long long size, unsigned long long loopCount) {

@@ -55,7 +55,7 @@ public:
 class HostToDeviceCE: public Testcase {
 public:
     HostToDeviceCE() : Testcase("host_to_device_memcpy_ce",
-            "\tHost to device CE memcpy using hipMemcpyAsync_") {}
+            "\tHost to device CE memcpy using cuMemcpyAsync") {}
     virtual ~HostToDeviceCE() {}
     void run(unsigned long long size, unsigned long long loopCount);
 };
@@ -64,7 +64,7 @@ public:
 class DeviceToHostCE: public Testcase {
 public:
     DeviceToHostCE() : Testcase("device_to_host_memcpy_ce", 
-            "\tDevice to host CE memcpy using hipMemcpyAsync_") {}
+            "\tDevice to host CE memcpy using cuMemcpyAsync") {}
     virtual ~DeviceToHostCE() {}
     void run(unsigned long long size, unsigned long long loopCount);
 };
@@ -93,7 +93,7 @@ public:
 class DeviceToDeviceReadCE: public Testcase {
 public:
     DeviceToDeviceReadCE() : Testcase("device_to_device_memcpy_read_ce",
-            "\tMeasures bandwidth of hipMemcpyAsync_ between each pair of accessible peers.\n"
+            "\tMeasures bandwidth of cuMemcpyAsync between each pair of accessible peers.\n"
             "\tRead tests launch a copy from the peer device to the target using the target's context.") {}
     virtual ~DeviceToDeviceReadCE() {}
     void run(unsigned long long size, unsigned long long loopCount);
@@ -104,7 +104,7 @@ public:
 class DeviceToDeviceWriteCE: public Testcase {
 public:
     DeviceToDeviceWriteCE() : Testcase("device_to_device_memcpy_write_ce",
-            "\tMeasures bandwidth of hipMemcpyAsync_ between each pair of accessible peers.\n"
+            "\tMeasures bandwidth of cuMemcpyAsync between each pair of accessible peers.\n"
             "\tWrite tests launch a copy from the target device to the peer using the target's context.") {}
     virtual ~DeviceToDeviceWriteCE() {}
     void run(unsigned long long size, unsigned long long loopCount);
@@ -115,7 +115,7 @@ public:
 class DeviceToDeviceBidirReadCE: public Testcase {
 public:
     DeviceToDeviceBidirReadCE() : Testcase("device_to_device_bidirectional_memcpy_read_ce", 
-            "\tMeasures bandwidth of hipMemcpyAsync_ between each pair of accessible peers.\n"
+            "\tMeasures bandwidth of cuMemcpyAsync between each pair of accessible peers.\n"
             "\tA copy in the opposite direction of the measured copy is run simultaneously but not measured.\n"
             "\tRead tests launch a copy from the peer device to the target using the target's context.") {}
     virtual ~DeviceToDeviceBidirReadCE() {}
@@ -127,7 +127,7 @@ public:
 class DeviceToDeviceBidirWriteCE: public Testcase {
 public:
     DeviceToDeviceBidirWriteCE() : Testcase("device_to_device_bidirectional_memcpy_write_ce", 
-            "\tMeasures bandwidth of hipMemcpyAsync_ between each pair of accessible peers.\n"
+            "\tMeasures bandwidth of cuMemcpyAsync between each pair of accessible peers.\n"
             "\tA copy in the opposite direction of the measured copy is run simultaneously but not measured.\n"
             "\tWrite tests launch a copy from the target device to the peer using the target's context.") {}
     virtual ~DeviceToDeviceBidirWriteCE() {}
@@ -139,7 +139,7 @@ public:
 class AllToHostCE: public Testcase {
 public:
     AllToHostCE() : Testcase("all_to_host_memcpy_ce", 
-            "\tMeasures bandwidth of hipMemcpyAsync_ between a single device and the host while simultaneously\n"
+            "\tMeasures bandwidth of cuMemcpyAsync between a single device and the host while simultaneously\n"
             "\trunning copies from all other devices to the host.") {}
     virtual ~AllToHostCE() {}
     void run(unsigned long long size, unsigned long long loopCount);
@@ -160,7 +160,7 @@ public:
 class HostToAllCE: public Testcase {
 public:
     HostToAllCE() : Testcase("host_to_all_memcpy_ce", 
-            "\tMeasures bandwidth of hipMemcpyAsync_ between the host to a single device while simultaneously\n"
+            "\tMeasures bandwidth of cuMemcpyAsync between the host to a single device while simultaneously\n"
             "\trunning copies from the host to all other devices.") {}
     virtual ~HostToAllCE() {}
     void run(unsigned long long size, unsigned long long loopCount);

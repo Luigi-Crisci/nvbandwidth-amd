@@ -21,7 +21,7 @@
 #include <nvml.h>
 #include <iostream>
 
-#include "kernels.h"
+#include "kernels.cuh"
 #include "testcase.h"
 #include "version.h"
 

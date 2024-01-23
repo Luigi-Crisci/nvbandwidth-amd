@@ -16,12 +16,12 @@
  */
 
 #include <boost/program_options.hpp>
-#include <hip/hip_runtime.h>
-#include <hip/hip_runtime_api.h>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
 #include <nvml.h>
 #include <iostream>
 
-#include "kernels.h"
+#include "kernels.cuh"
 #include "testcase.h"
 #include "version.h"
 
@@ -93,7 +93,7 @@ Testcase* findTestcase(std::vector<Testcase*> &testcases, std::string id) {
 }
 
 void runTestcase(std::vector<Testcase*> &testcases, const std::string &testcaseID) {
-    hipCtx_t testCtx;
+    CUcontext testCtx;
 
     try {
         Testcase* test = findTestcase(testcases, testcaseID);
@@ -103,11 +103,11 @@ void runTestcase(std::vector<Testcase*> &testcases, const std::string &testcaseI
         }
         std::cout << "Running " << test->testKey() << ".\n";
 
-        CU_ASSERT(hipCtxCreate(&testCtx, 0, 0));
-        CU_ASSERT(hipCtxSetCurrent(testCtx));
+        CU_ASSERT(cuCtxCreate(&testCtx, 0, 0));
+        CU_ASSERT(cuCtxSetCurrent(testCtx));
         // Run the testcase
         test->run(bufferSize * _MiB, loopCount);
-        CU_ASSERT(hipCtxDestroy(testCtx));
+        CU_ASSERT(cuCtxDestroy(testCtx));
     } catch (std::string &s) {
         std::cout << "ERROR: " << s << std::endl;
     }
@@ -170,19 +170,19 @@ int main(int argc, char **argv) {
     std::cout << "NOTE: This tool reports current measured bandwidth on your system." << std::endl 
               << "Additional system-specific tuning may be required to achieve maximal peak bandwidth." << std::endl << std::endl;
 
-    hipInit(0);
+    cuInit(0);
     nvmlInit();
-    CU_ASSERT(hipGetDeviceCount(&deviceCount));
+    CU_ASSERT(cuDeviceGetCount(&deviceCount));
     if (bufferSize < defaultBufferSize) {
         std::cout << "NOTE: You have chosen a buffer size that is smaller than the default buffer size. " << std::endl
         << "It is suggested to use the default buffer size (64MB) to achieve maximal peak bandwidth." << std::endl << std::endl;
     }
 
     int cudaVersion;
-    hipRuntimeGetVersion(&cudaVersion);
+    cudaRuntimeGetVersion(&cudaVersion);
     std::cout << "CUDA Runtime Version: " << cudaVersion << std::endl;
 
-    CU_ASSERT(hipDriverGetVersion(&cudaVersion));
+    CU_ASSERT(cuDriverGetVersion(&cudaVersion));
     std::cout << "CUDA Driver Version: " << cudaVersion << std::endl;
 
     char driverVersion[NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE];
@@ -190,11 +190,11 @@ int main(int argc, char **argv) {
     std::cout << "Driver Version: " << driverVersion << std::endl << std::endl;
 
     for (int iDev = 0; iDev < deviceCount; iDev++) {
-        hipDevice_t dev;
+        CUdevice dev;
         char name[256];
 
-        CU_ASSERT(hipDeviceGet(&dev, iDev));
-        CU_ASSERT(hipDeviceGetName(name, 256, dev));
+        CU_ASSERT(cuDeviceGet(&dev, iDev));
+        CU_ASSERT(cuDeviceGetName(name, 256, dev));
 
         std::cout << "Device " << iDev << ": " << name << std::endl;
     }
